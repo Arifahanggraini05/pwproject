@@ -54,26 +54,9 @@ formProduk?.addEventListener('submit', async (e) => {
 });
 
 async function fetchRiwayat() {
-  const { data, error } = await supabase
-    .from('orders')
-    .select(`
-      id,
-      product_id,
-      size,
-      quantity,
-      buyer_name,
-      address,
-      phone,
-      payment_method,
-      shipping_method,
-      created_at,
-      products(name)
-    `);
-
-  if (error) return console.error('Gagal ambil riwayat:', error);
-
-  if (data.length === 0) {
-    riwayat.innerHTML = '<p>Tidak ada data pembelian.</p>';
+  const { data, error } = await supabase.from('orders').select('*, products(name)');
+  if (error) {
+    console.error("Gagal ambil riwayat:", error);
     return;
   }
 
@@ -88,6 +71,7 @@ async function fetchRiwayat() {
       <p>Metode Bayar: ${o.payment_method}</p>
       <p>Pengiriman: ${o.shipping_method}</p>
       <p><i>${new Date(o.created_at).toLocaleString()}</i></p>
+      <button onclick="hapusRiwayat(${o.id})">Hapus Riwayat</button>
     </div>
   `).join('');
 }
@@ -151,6 +135,21 @@ window.submitEdit = async () => {
   alert('Produk berhasil diupdate');
   editForm.classList.add('hidden');
   fetchProdukAdmin();
+};
+
+window.hapusRiwayat = async (id) => {
+  const konfirmasi = confirm("Yakin ingin menghapus riwayat ini?");
+  if (!konfirmasi) return;
+
+  const { error } = await supabase.from('orders').delete().eq('id', id);
+  if (error) {
+    alert("Gagal menghapus riwayat");
+    console.error(error);
+    return;
+  }
+
+  alert("Riwayat berhasil dihapus");
+  fetchRiwayat(); // refresh daftar
 };
 
 (async () => {
